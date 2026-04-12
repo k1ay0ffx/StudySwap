@@ -6,3 +6,37 @@ stages:
   - build
   - test
   - deploy
+
+varaibles:
+  OWNER_NAME:Nursultan
+  LOG_FILE  :log.txt
+
+build_jog:
+  stage: build
+  script:
+    - echo "Build started"
+    - echo "Loading..." >> $LOG_FILE
+    - echo "Building completed succesfully"
+
+testing1:
+  stage: test
+  script:
+    - echo "Test1 started"
+    - echo "Testing lines" >> $LOG_FILE
+    - echo "Test1 finished succesfully"
+
+testing2:
+  stage: test
+  script:
+    - echo "Test2 started"
+    - echo "Testing code" >> $LOG_FILE
+    - echo "Test2 finished succesfully"
+
+deploy_project_to_server:
+  stage: deploy 
+  script:
+    - echo "Deploying to server"
+    - echo "No log errors. Success" >> $LOG_FILE
+    - echo "Deploying to server finished succesfully"
+    - cat $LOG_FILE
+  
