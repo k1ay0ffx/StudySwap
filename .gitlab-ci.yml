@@ -1,0 +1,8 @@
+# My first GitLab CI-CD pipline
+# Created by Atamuratov Nursultan 2024
+
+
+stages:
+  - build
+  - test
+  - deploy
