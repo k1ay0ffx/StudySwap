@@ -8,7 +8,7 @@ stages:
   - deploy
 
 variables:
-   OWNER_NAME : Nursultan
+   OWNER_NAME : Atamuratov Nursultan
    LOG_FILE   : log.txt
 
 build_jog:
