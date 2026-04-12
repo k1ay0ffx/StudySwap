@@ -7,9 +7,9 @@ stages:
   - test
   - deploy
 
-varaibles:
-  OWNER_NAME:Nursultan
-  LOG_FILE  :log.txt
+variables:
+   OWNER_NAME : Nursultan
+   LOG_FILE   : log.txt
 
 build_jog:
   stage: build
