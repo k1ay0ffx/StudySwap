@@ -369,7 +369,7 @@ export default function HomePage() {
                 }}>
                   <div>
                     <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-3)', marginBottom: 8 }}>
-                      Ұсынасыз
+                      Үйретесіз
                     </p>
                     <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'center' }}>
                       {profile.skills_teach.map(s => formatBadge(s, 'orange'))}
@@ -555,7 +555,7 @@ export default function HomePage() {
                       <div>
                         <p style={{ fontWeight: 600, fontSize: 15, marginBottom: 2 }}>Telegram арқылы байланысыңыз</p>
                         <p style={{ fontSize: 13, color: 'var(--ink-2)' }}>
-                          Кездесу уақыты мен форматын талқылаңыз
+                          Кездесу уақыты мен форматын талқылай аласыз
                         </p>
                       </div>
                     </div>

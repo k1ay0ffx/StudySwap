@@ -5,14 +5,14 @@ import { useRouter } from 'next/navigation'
 import type { Format } from '@/lib/types'
 
 const SUGGESTED_SUBJECTS = [
-  'Математика', 'Агылшын тілі', 'Python', 'Дизайн',
-  'Физика', 'Маркетинг', 'Тарих', 'Биология',
+  'Математика', 'Ағылшын тілі', 'Python', 'Дизайн',
+  'Физика', 'Маркетинг', 'Қазақстан Тарихы', 'Биология',
   'Химия', 'JavaScript', 'Орыс тілі', 'Экономика',
 ]
 
 const FORMAT_OPTIONS: { value: Format; label: string; icon: string; desc: string }[] = [
   { value: 'online',  label: 'Онлайн',           icon: '\u{1F4BB}', desc: 'Тек онлайн сабак' },
-  { value: 'offline', label: 'Офлайн',            icon: '\u{1F91D}', desc: 'Тек офлайн кездесу' },
+  { value: 'offline', label: 'Оффлайн',            icon: '\u{1F91D}', desc: 'Тек оффлайн кездесу' },
   { value: 'both',    label: 'Екеуі де жарайды',  icon: '\u26A1',    desc: 'Икемді формат' },
 ]
 
@@ -77,12 +77,12 @@ function SkillInput({
           onFocus={() => setFocused(true)}
           onBlur={() => { setFocused(false); setTimeout(() => {}, 150) }}
           onKeyDown={handleKey}
-          placeholder={skills.length === 0 ? 'Жазыныз немесе торменнен тандрт...' : ''}
+          placeholder={skills.length === 0 ? 'Өзіңіз жазыңыз немесе төмендегілерден таңдаңыз...' : ''}
           style={{ border: 'none', outline: 'none', background: 'transparent',
             fontSize: 13, color: 'var(--ink)', minWidth: 120, flex: 1, fontFamily: 'var(--font-body)' }} />
       </div>
       <p style={{ fontSize: 11, color: 'var(--ink-3)', marginTop: 3 }}>
-        Enter басып косыныз немесе тормен пілдерден тандыныз
+        Enter басып қосыңыз немесе тормен пілдерден таңдаңыз
       </p>
 
       {focused && input && suggestions.length > 0 && (
@@ -138,18 +138,18 @@ export default function RegisterPage() {
   function next() {
     setError('')
     if (step === 1) {
-      if (!form.name || !form.email || !form.password) { setError('Барлык орістерді толтырынъыз'); return }
-      if (form.password.length < 6) { setError('Пароль кемінде 6 символ болуы керек'); return }
+      if (!form.name || !form.email || !form.password) { setError('Барлық жерді толтырыңыз'); return }
+      if (form.password.length < 6) { setError('Құпиясөз кемінде 6 символ болуы керек'); return }
     }
-    if (step === 2) {
-      if (!form.skills_teach.length || !form.skills_learn.length) { setError('Кемінде бір данды косыныз'); return }
-    }
+    // if (step === 2) {
+    //   if (!form.skills_teach.length || !form.skills_learn.length) { setError('Кемінде бір д косыныз'); return }
+    // }
     setStep((step + 1) as Step)
   }
 
   async function submit() {
     setError('')
-    if (!form.telegram) { setError('Telegram никнейміне кіріп жазынъыз'); return }
+    if (!form.telegram) { setError('Telegram никнейм жазыңыз'); return }
     setLoading(true)
     try {
       const res = await fetch('/api/auth/register', {
@@ -167,7 +167,7 @@ export default function RegisterPage() {
         }),
       })
       const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Qate payda boldy')
+      if (!res.ok) throw new Error(data.error || 'Қате пайда болды')
       router.push('/login?registered=true')
     } catch (e: unknown) {
       setError((e as Error).message)
@@ -200,13 +200,13 @@ export default function RegisterPage() {
         <div style={{ width: '100%', maxWidth: 540 }}>
 
           <div className="anim-fade-up" style={{ marginBottom: 22 }}>
-            <span className="section-label">Жана аккаунт</span>
+            <span className="section-label">Жаңа аккаунт</span>
             <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(28px,5vw,40px)', marginTop: 7, marginBottom: 5 }}>
-              {step === 1 && <>Озіньіз туралы <em style={{ fontStyle: 'italic', color: 'var(--accent)' }}>айтынъыз</em></>}
-              {step === 2 && <>Данбыларынъызды <em style={{ fontStyle: 'italic', color: 'var(--accent)' }}>косынъыз</em></>}
-              {step === 3 && <>Сонъгы <em style={{ fontStyle: 'italic', color: 'var(--accent)' }}>мәліметтер</em></>}
+              {step === 1 && <>Өзіңіз туралы <em style={{ fontStyle: 'italic', color: 'var(--accent)' }}></em></>}
+              {step === 2 && <>Дағдыларыңызды <em style={{ fontStyle: 'italic', color: 'var(--accent)' }}>қосыңыз</em></>}
+              {step === 3 && <>Соңғы <em style={{ fontStyle: 'italic', color: 'var(--accent)' }}>мәліметтер</em></>}
             </h1>
-            <p style={{ color: 'var(--ink-2)', fontSize: 13 }}>{step} / 3 кадам</p>
+            <p style={{ color: 'var(--ink-2)', fontSize: 13 }}>{step} / 3 қадам</p>
           </div>
 
           <div style={{ height: 3, background: 'var(--border)', borderRadius: 2, marginBottom: 22, overflow: 'hidden' }}>
@@ -227,9 +227,9 @@ export default function RegisterPage() {
             {step === 1 && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 13 }}>
                 {[
-                  { label: 'Есімньіз', type: 'text', ph: 'Алибек Дуйсенов', key: 'name' },
+                  { label: 'Есіміңіз', type: 'text', ph: 'Алибек Дуйсенов', key: 'name' },
                   { label: 'Email', type: 'email', ph: 'alibek@gmail.com', key: 'email' },
-                  { label: 'Купия соз', type: 'password', ph: 'Кемінде 6 символ', key: 'password' },
+                  { label: 'Құпия сөз', type: 'password', ph: 'Кемінде 6 символ', key: 'password' },
                 ].map(f => (
                   <div key={f.key}>
                     <label style={{ fontSize: 13, fontWeight: 500, color: 'var(--ink-2)', display: 'block', marginBottom: 5 }}>
@@ -242,9 +242,9 @@ export default function RegisterPage() {
                 ))}
                 <div>
                   <label style={{ fontSize: 13, fontWeight: 500, color: 'var(--ink-2)', display: 'block', marginBottom: 5 }}>
-                    Оз туралы <span style={{ color: 'var(--ink-3)' }}>(міндетті емес)</span>
+                    Өзіңіз туралы <span style={{ color: 'var(--ink-3)' }}>(міндетті емес)</span>
                   </label>
-                  <textarea className="input" placeholder="2 курс студенті, МУИТ..." rows={2}
+                  <textarea className="input" placeholder="КБТУ => ВТиПО, 2 курс студенті..." rows={2}
                     style={{ resize: 'none' }} value={form.bio}
                     onChange={e => setForm({ ...form, bio: e.target.value })} />
                 </div>
@@ -257,16 +257,16 @@ export default function RegisterPage() {
 
             {step === 2 && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-                <SkillInput label="Мен уйрете аламын" sublabel="Кандай пандерде / тацырыптарда жаксысыз?"
+                <SkillInput label="Мен үйрете аламын" sublabel="Қандай пандерде / салада білім / тәжірибеңіз бар?"
                   variant="orange" skills={form.skills_teach}
                   onChange={s => setForm({ ...form, skills_teach: s })} />
                 <div style={{ borderTop: '1px solid var(--border)', paddingTop: 22 }}>
-                  <SkillInput label="Мен уйренгім келеді" sublabel="Кандай дагдыларды игергінъіз келеді?"
+                  <SkillInput label="Мен үйренгім келеді" sublabel="Қай бағытта үйренгіңіз келеді?"
                     variant="green" skills={form.skills_learn}
                     onChange={s => setForm({ ...form, skills_learn: s })} />
                 </div>
                 <div style={{ display: 'flex', gap: 10 }}>
-                  <button className="btn btn-outline" onClick={() => setStep(1)} style={{ flex: 1, justifyContent: 'center' }}>Артка</button>
+                  <button className="btn btn-outline" onClick={() => setStep(1)} style={{ flex: 1, justifyContent: 'center' }}>Артқа</button>
                   <button className="btn btn-primary" onClick={next} style={{ flex: 2, justifyContent: 'center', padding: '13px' }}>Келесі</button>
                 </div>
               </div>
@@ -285,8 +285,8 @@ export default function RegisterPage() {
                       value={form.telegram.replace('@', '')}
                       onChange={e => setForm({ ...form, telegram: e.target.value.replace('@', '') })} />
                   </div>
-                  <p style={{ fontSize: 11, color: 'var(--ink-3)', marginTop: 3 }}>
-                    Серіктесіньіз осы аркылы байланысады
+                  <p style={{ fontSize: 13, color: 'var(--ink-3)', marginTop: 3 }}>
+                    Серіктесіңізбен осы арқылы байланысасыз
                   </p>
                 </div>
 
@@ -318,7 +318,7 @@ export default function RegisterPage() {
                 <div style={{ padding: '13px 15px', background: 'var(--surface-2)',
                   borderRadius: 'var(--r)', border: '1px solid var(--border)' }}>
                   <p style={{ fontSize: 11, fontWeight: 600, color: 'var(--ink-3)', marginBottom: 7,
-                    textTransform: 'uppercase', letterSpacing: '0.08em' }}>Жиынтык</p>
+                    textTransform: 'uppercase', letterSpacing: '0.08em' }}>Білім / Тәжірибе</p>
                   <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
                     {form.skills_teach.map(s => (
                       <span key={s} className="badge badge-orange" style={{ fontSize: 11 }}>+ {s}</span>
@@ -330,10 +330,10 @@ export default function RegisterPage() {
                 </div>
 
                 <div style={{ display: 'flex', gap: 10 }}>
-                  <button className="btn btn-outline" onClick={() => setStep(2)} style={{ flex: 1, justifyContent: 'center' }}>Артка</button>
+                  <button className="btn btn-outline" onClick={() => setStep(2)} style={{ flex: 1, justifyContent: 'center' }}>Артқа</button>
                   <button className="btn btn-primary" onClick={submit} disabled={loading}
                     style={{ flex: 2, justifyContent: 'center', padding: '13px', opacity: loading ? 0.7 : 1 }}>
-                    {loading ? 'Тіркелуде...' : 'Аккаунт куру'}
+                    {loading ? 'Тіркелуде...' : 'Аккаунт ашу'}
                   </button>
                 </div>
               </div>
