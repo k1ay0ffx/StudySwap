@@ -4,40 +4,53 @@ import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import type { Format } from '@/lib/types'
 
-const SUGGESTED_SUBJECTS = [
-  'Математика', 'Ағылшын тілі', 'Python', 'Дизайн',
-  'Физика', 'Маркетинг', 'Қазақстан Тарихы', 'Биология',
-  'Химия', 'JavaScript', 'Орыс тілі', 'Экономика',
+const PRESET_SKILLS = [
+  { cat: '📐 Ғылым', items: ['Математика', 'Физика', 'Химия', 'Статистика', 'Алгебра'] },
+  { cat: '💻 IT', items: ['Python', 'JavaScript', 'React', 'SQL', 'Java', 'C++', 'Дизайн', 'UI/UX'] },
+  { cat: '🌍 Тілдер', items: ['Ағылшын тілі', 'Орыс тілі', 'Қазақ тілі', 'Deutsch', 'Français'] },
+  { cat: '📊 Бизнес', items: ['Маркетинг', 'Экономика', 'Бухгалтерия', 'Менеджмент', 'SMM'] },
+  { cat: '🎨 Шығармашылық', items: ['Фотография', 'Видеомонтаж', 'Иллюстрация', 'Музыка'] },
+  { cat: '📚 Гуманитарлық', items: ['Биология', 'Тарих', 'Психология', 'Социология'] },
 ]
 
 const FORMAT_OPTIONS: { value: Format; label: string; icon: string; desc: string }[] = [
-  { value: 'online',  label: 'Онлайн',           icon: '\u{1F4BB}', desc: 'Тек онлайн сабак' },
-  { value: 'offline', label: 'Оффлайн',            icon: '\u{1F91D}', desc: 'Тек оффлайн кездесу' },
-  { value: 'both',    label: 'Екеуі де жарайды',  icon: '\u26A1',    desc: 'Икемді формат' },
+  { value: 'online',  label: 'Онлайн',        icon: '💻', desc: 'Тек онлайн кездесу' },
+  { value: 'offline', label: 'Офлайн',         icon: '🤝', desc: 'Тек өмірде кездесу' },
+  { value: 'both',    label: 'Екі таңдауда',   icon: '⚡', desc: 'Ыңғайлы формат' },
 ]
 
 type Step = 1 | 2 | 3
 
-function SkillInput({
+// ── Компонент выбора навыков ─────────────────────────────
+function SkillPicker({
   label, sublabel, variant, skills, onChange,
 }: {
-  label: string; sublabel: string; variant: 'orange' | 'green'
+  label: string; sublabel: string
+  variant: 'orange' | 'green'
   skills: string[]; onChange: (s: string[]) => void
 }) {
   const [input, setInput] = useState('')
   const [focused, setFocused] = useState(false)
-  const ref = useRef<HTMLInputElement>(null)
+  const [activeCategory, setActiveCategory] = useState<string | null>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
 
-  const suggestions = SUGGESTED_SUBJECTS.filter(
-    s => s.toLowerCase().includes(input.toLowerCase()) && !skills.includes(s)
-  )
+  const accent = variant === 'orange' ? 'var(--accent)' : 'var(--green)'
+  const accentGlow = variant === 'orange' ? 'var(--accent-glow)' : 'rgba(26,107,74,0.12)'
 
+  // Поиск по всем категориям
+  const searchResults = input.trim()
+    ? PRESET_SKILLS.flatMap(c => c.items).filter(
+        s => s.toLowerCase().includes(input.toLowerCase()) && !skills.includes(s)
+      )
+    : []
+
+  // ✅ FIX: добавляет любой текст — и из PRESET_SKILLS, и произвольный
   function add(skill: string) {
     const t = skill.trim()
-    if (!t || skills.includes(t)) return
+    if (!t || skills.includes(t) || skills.length >= 8) return
     onChange([...skills, t])
     setInput('')
-    ref.current?.focus()
+    inputRef.current?.focus()
   }
 
   function remove(skill: string) { onChange(skills.filter(s => s !== skill)) }
@@ -47,78 +60,219 @@ function SkillInput({
     if (e.key === 'Backspace' && !input && skills.length > 0) remove(skills[skills.length - 1])
   }
 
-  const accent = variant === 'orange' ? 'var(--accent)' : 'var(--green)'
+  // ✅ FIX: при потере фокуса автоматически добавляем то, что напечатано
+  function handleBlur() {
+    if (input.trim()) {
+      add(input)
+    }
+    setTimeout(() => setFocused(false), 150)
+  }
 
   return (
     <div>
-      <label style={{ fontSize: 13, fontWeight: 600, display: 'block', marginBottom: 3 }}>{label}</label>
-      <p style={{ fontSize: 12, color: 'var(--ink-3)', marginBottom: 9 }}>{sublabel}</p>
+      <div style={{ marginBottom: 10 }}>
+        <label style={{ fontSize: 14, fontWeight: 600, display: 'block', marginBottom: 2 }}>{label}</label>
+        <p style={{ fontSize: 12, color: 'var(--ink-3)' }}>{sublabel}</p>
+      </div>
 
-      <div onClick={() => ref.current?.focus()} style={{
-        minHeight: 48, padding: '7px 10px',
-        border: `1.5px solid ${focused ? accent : 'var(--border)'}`,
-        borderRadius: 'var(--r)', background: 'var(--surface)', cursor: 'text',
-        display: 'flex', flexWrap: 'wrap', gap: 5, alignItems: 'center',
-        transition: 'border-color 0.2s',
-        boxShadow: focused ? `0 0 0 3px ${variant === 'orange' ? 'var(--accent-glow)' : 'rgba(26,107,74,0.12)'}` : 'none',
-      }}>
+      {/* Выбранные навыки + поле ввода */}
+      <div
+        onClick={() => inputRef.current?.focus()}
+        style={{
+          minHeight: 52, padding: '8px 12px',
+          border: `1.5px solid ${focused ? accent : 'var(--border)'}`,
+          borderRadius: 'var(--r)', background: 'var(--surface)', cursor: 'text',
+          display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center',
+          transition: 'border-color .2s, box-shadow .2s',
+          boxShadow: focused ? `0 0 0 3px ${accentGlow}` : 'none',
+        }}
+      >
         {skills.map(s => (
-          <span key={s} className={`badge badge-${variant}`}
-            style={{ display: 'inline-flex', alignItems: 'center', padding: '5px 8px 5px 11px', fontSize: 12,
-              border: `1px solid ${accent}` }}>
+          <span key={s} style={{
+            display: 'inline-flex', alignItems: 'center', gap: 4,
+            padding: '4px 10px 4px 12px', borderRadius: 999, fontSize: 12, fontWeight: 500,
+            background: variant === 'orange' ? 'rgba(232,93,4,0.1)' : 'rgba(26,107,74,0.1)',
+            color: accent, border: `1px solid ${variant === 'orange' ? 'rgba(232,93,4,0.25)' : 'rgba(26,107,74,0.25)'}`,
+          }}>
             {s}
-            <button type="button" onClick={() => remove(s)}
-              style={{ marginLeft: 5, background: 'none', border: 'none', cursor: 'pointer',
-                padding: 0, fontSize: 11, color: 'inherit', opacity: 0.7, lineHeight: 1 }}>x</button>
+            <button type="button" onClick={e => { e.stopPropagation(); remove(s) }}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: accent,
+                opacity: .6, fontSize: 14, lineHeight: 1, padding: '0 2px', display: 'flex', alignItems: 'center' }}>
+              ×
+            </button>
           </span>
         ))}
-        <input ref={ref} value={input}
+        <input
+          ref={inputRef}
+          value={input}
           onChange={e => setInput(e.target.value)}
           onFocus={() => setFocused(true)}
-          onBlur={() => { setFocused(false); setTimeout(() => {}, 150) }}
+          onBlur={handleBlur}  // ✅ FIX: авто-добавление при blur
           onKeyDown={handleKey}
-          placeholder={skills.length === 0 ? 'Өзіңіз жазыңыз немесе төмендегілерден таңдаңыз...' : ''}
-          style={{ border: 'none', outline: 'none', background: 'transparent',
-            fontSize: 13, color: 'var(--ink)', minWidth: 120, flex: 1, fontFamily: 'var(--font-body)' }} />
+          placeholder={skills.length === 0 ? 'Дағдынылыңыз жазып, Enter немесе Space пернесін басыңыз.' : skills.length < 8 ? 'Тағы...' : ''}
+          style={{
+            border: 'none', outline: 'none', background: 'transparent',
+            fontSize: 13, color: 'var(--ink)', minWidth: 140, flex: 1,
+            fontFamily: 'var(--font-body)',
+          }}
+        />
       </div>
-      <p style={{ fontSize: 11, color: 'var(--ink-3)', marginTop: 3 }}>
-        Enter басып қосыңыз немесе тормен пілдерден таңдаңыз
+
+      {/* Подсказка */}
+      <p style={{ fontSize: 11, color: 'var(--ink-3)', marginTop: 4 }}>
+        Өзіңіз қосу үшін Enter пернесін басыңыз · Шек. 8 дағды · Кез келген дағдыны жазуға болады
       </p>
 
-      {focused && input && suggestions.length > 0 && (
-        <div style={{ marginTop: 4, background: 'var(--surface)', border: '1px solid var(--border)',
-          borderRadius: 'var(--r)', boxShadow: 'var(--shadow-md)', overflow: 'hidden', position: 'relative', zIndex: 20 }}>
-          {suggestions.slice(0, 5).map(s => (
+      {/* Выпадающие результаты поиска */}
+      {focused && input.trim() && searchResults.length > 0 && (
+        <div style={{
+          marginTop: 4, background: 'var(--surface)', border: '1px solid var(--border)',
+          borderRadius: 'var(--r)', boxShadow: 'var(--shadow-md)', overflow: 'hidden', zIndex: 30,
+          position: 'relative',
+        }}>
+          {searchResults.slice(0, 5).map(s => (
             <button key={s} type="button" onMouseDown={() => add(s)}
-              style={{ display: 'block', width: '100%', textAlign: 'left', padding: '9px 14px',
-                background: 'none', border: 'none', borderBottom: '1px solid var(--border)',
-                cursor: 'pointer', fontSize: 13, color: 'var(--ink)' }}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 10, width: '100%', textAlign: 'left',
+                padding: '10px 14px', background: 'none', border: 'none',
+                borderBottom: '1px solid var(--border)', cursor: 'pointer', fontSize: 13, color: 'var(--ink)',
+              }}
               onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-2)')}
-              onMouseLeave={e => (e.currentTarget.style.background = 'none')}>
-              <span style={{ color: accent, marginRight: 7, fontWeight: 700 }}>+</span>{s}
+              onMouseLeave={e => (e.currentTarget.style.background = 'none')}
+            >
+              <span style={{ width: 20, height: 20, borderRadius: '50%', background: accent,
+                color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 12, fontWeight: 700, flexShrink: 0 }}>+</span>
+              {s}
             </button>
           ))}
+          {/* ✅ FIX: показываем кнопку добавить своё, если нет совпадений или хочет именно своё */}
+          {input.trim() && !PRESET_SKILLS.flatMap(c => c.items).some(s => s.toLowerCase() === input.trim().toLowerCase()) && (
+            <button type="button" onMouseDown={() => add(input)}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 10, width: '100%', textAlign: 'left',
+                padding: '10px 14px', background: 'rgba(232,93,4,0.04)', border: 'none',
+                cursor: 'pointer', fontSize: 13, color: accent, fontWeight: 600,
+              }}>
+              <span style={{ width: 20, height: 20, borderRadius: '50%', background: accent,
+                color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 12, fontWeight: 700, flexShrink: 0 }}>+</span>
+               {/* Қосу«{input.trim()} */}
+            </button>
+          )}
         </div>
       )}
 
-      {!input && (
-        <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', marginTop: 8 }}>
-          {SUGGESTED_SUBJECTS.filter(s => !skills.includes(s)).map(s => (
-            <button key={s} type="button" onClick={() => add(s)}
-              style={{ padding: '4px 9px', borderRadius: 999, fontSize: 11, fontWeight: 500,
-                background: 'var(--surface-2)', border: '1px solid var(--border)',
-                cursor: 'pointer', color: 'var(--ink-2)', transition: 'all 0.12s' }}
-              onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = accent; (e.currentTarget as HTMLButtonElement).style.color = accent }}
-              onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--border)'; (e.currentTarget as HTMLButtonElement).style.color = 'var(--ink-2)' }}>
-              + {s}
+      {/* Если ввёл что-то, но нет совпадений из пресетов — подсказка добавить */}
+      {focused && input.trim() && searchResults.length === 0 && (
+        <div style={{
+          marginTop: 4, background: 'var(--surface)', border: '1px solid var(--border)',
+          borderRadius: 'var(--r)', overflow: 'hidden', position: 'relative',
+        }}>
+          <button type="button" onMouseDown={() => add(input)}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 10, width: '100%', textAlign: 'left',
+              padding: '10px 14px', background: 'none', border: 'none',
+              cursor: 'pointer', fontSize: 13, color: accent, fontWeight: 600,
+            }}>
+            <span style={{ width: 20, height: 20, borderRadius: '50%', background: accent,
+              color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 12, fontWeight: 700, flexShrink: 0 }}>+</span>
+            {/* {input.trim()}»  */}
+          </button>
+        </div>
+      )}
+
+      {/* Категории с готовыми навыками */}
+      {!input.trim() && (
+        <div style={{ marginTop: 14 }}>
+          {/* Табы категорий */}
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10 }}>
+            <button type="button"
+              onClick={() => setActiveCategory(activeCategory ? null : PRESET_SKILLS[0].cat)}
+              style={{
+                padding: '4px 10px', borderRadius: 999, fontSize: 11, fontWeight: 600,
+                cursor: 'pointer', transition: 'all .12s',
+                background: activeCategory ? 'var(--surface-2)' : accent,
+                border: `1px solid ${activeCategory ? 'var(--border)' : accent}`,
+                color: activeCategory ? 'var(--ink-2)' : '#fff',
+              }}>
+              {activeCategory ? '▴ Жасыру' : '▾Барлық пәндерді көрсету'}
             </button>
-          ))}
+          </div>
+
+          {!activeCategory && (
+            // Быстрые чипы — популярные без категорий
+            <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
+              {PRESET_SKILLS.flatMap(c => c.items).slice(0, 12).filter(s => !skills.includes(s)).map(s => (
+                <button key={s} type="button" onClick={() => add(s)}
+                  style={{
+                    padding: '5px 11px', borderRadius: 999, fontSize: 12, fontWeight: 500,
+                    background: 'var(--surface-2)', border: '1px solid var(--border)',
+                    cursor: 'pointer', color: 'var(--ink-2)', transition: 'all .12s',
+                  }}
+                  onMouseEnter={e => {
+                    (e.currentTarget as HTMLButtonElement).style.borderColor = accent
+                    ;(e.currentTarget as HTMLButtonElement).style.color = accent
+                  }}
+                  onMouseLeave={e => {
+                    ;(e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--border)'
+                    ;(e.currentTarget as HTMLButtonElement).style.color = 'var(--ink-2)'
+                  }}>
+                  + {s}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {activeCategory && (
+            <div>
+              {/* Табы категорий */}
+              <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginBottom: 10 }}>
+                {PRESET_SKILLS.map(c => (
+                  <button key={c.cat} type="button" onClick={() => setActiveCategory(c.cat)}
+                    style={{
+                      padding: '4px 10px', borderRadius: 999, fontSize: 11, fontWeight: 500,
+                      cursor: 'pointer', transition: 'all .12s',
+                      background: activeCategory === c.cat ? accent : 'var(--surface-2)',
+                      border: `1px solid ${activeCategory === c.cat ? accent : 'var(--border)'}`,
+                      color: activeCategory === c.cat ? '#fff' : 'var(--ink-2)',
+                    }}>
+                    {c.cat}
+                  </button>
+                ))}
+              </div>
+              {/* Навыки выбранной категории */}
+              <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
+                {PRESET_SKILLS.find(c => c.cat === activeCategory)?.items
+                  .filter(s => !skills.includes(s)).map(s => (
+                    <button key={s} type="button" onClick={() => add(s)}
+                      style={{
+                        padding: '6px 12px', borderRadius: 999, fontSize: 12, fontWeight: 500,
+                        background: 'var(--surface)', border: `1px solid var(--border-2)`,
+                        cursor: 'pointer', color: 'var(--ink)', transition: 'all .12s',
+                      }}
+                      onMouseEnter={e => {
+                        ;(e.currentTarget as HTMLButtonElement).style.background = variant === 'orange' ? 'rgba(232,93,4,0.08)' : 'rgba(26,107,74,0.08)'
+                        ;(e.currentTarget as HTMLButtonElement).style.borderColor = accent
+                      }}
+                      onMouseLeave={e => {
+                        ;(e.currentTarget as HTMLButtonElement).style.background = 'var(--surface)'
+                        ;(e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--border-2)'
+                      }}>
+                      + {s}
+                    </button>
+                  ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
   )
 }
 
+// ── Страница регистрации ─────────────────────────────────
 export default function RegisterPage() {
   const router = useRouter()
   const [step, setStep] = useState<Step>(1)
@@ -126,7 +280,8 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false)
   const [form, setForm] = useState({
     name: '', email: '', password: '', telegram: '', bio: '',
-    skills_teach: [] as string[], skills_learn: [] as string[],
+    skills_teach: [] as string[],
+    skills_learn: [] as string[],
     format: 'both' as Format,
   })
 
@@ -138,36 +293,33 @@ export default function RegisterPage() {
   function next() {
     setError('')
     if (step === 1) {
-      if (!form.name || !form.email || !form.password) { setError('Барлық жерді толтырыңыз'); return }
-      if (form.password.length < 6) { setError('Құпиясөз кемінде 6 символ болуы керек'); return }
+      if (!form.name || !form.email || !form.password) { setError('Барлық өрістерді толтырыңыз'); return }
+      if (form.password.length < 6) { setError('Құпия сөз кемінде 6 таңба болу қажет'); return }
     }
-    // if (step === 2) {
-    //   if (!form.skills_teach.length || !form.skills_learn.length) { setError('Кемінде бір д косыныз'); return }
-    // }
+    if (step === 2) {
+      // ✅ FIX: Валидация без привязки к PRESET_SKILLS — любой непустой навык принимается
+      if (!form.skills_teach.length || !form.skills_learn.length) {
+        setError('Әр жерге кем дегенде бір дағды қосыңыз'); return
+      }
+    }
     setStep((step + 1) as Step)
   }
 
   async function submit() {
     setError('')
-    if (!form.telegram) { setError('Telegram никнейм жазыңыз'); return }
+    if (!form.telegram) { setError('Telegram атыңызды көрсетіңіз'); return }
     setLoading(true)
     try {
       const res = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          name: form.name,
-          email: form.email,
-          password: form.password,
-          bio: form.bio,
-          telegram: form.telegram,
-          skills_teach: form.skills_teach,
-          skills_learn: form.skills_learn,
-          format: form.format,
+          ...form,
+          telegram: form.telegram.startsWith('@') ? form.telegram : `@${form.telegram}`,
         }),
       })
       const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Қате пайда болды')
+      if (!res.ok) throw new Error(data.error || 'Тіркеу қатесі')
       router.push('/login?registered=true')
     } catch (e: unknown) {
       setError((e as Error).message)
@@ -176,56 +328,72 @@ export default function RegisterPage() {
     }
   }
 
+  const stepTitles = ['', 'Өзіңіз туралы', 'Дағды', 'Мәліметтер']
+
   return (
     <>
-      <nav style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100, height: 64,
+      {/* Navbar */}
+      <nav style={{
+        position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100, height: 64,
         display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 32px',
-        background: 'rgba(250,247,242,0.9)', backdropFilter: 'blur(12px)', borderBottom: '1px solid var(--border)' }}>
+        background: 'rgba(250,247,242,0.9)', backdropFilter: 'blur(12px)',
+        borderBottom: '1px solid var(--border)',
+      }}>
         <a href="/" style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 700,
           color: 'var(--ink)', letterSpacing: '-0.04em', textDecoration: 'none' }}>
           Study<span style={{ color: 'var(--accent)' }}>Swap</span>
         </a>
-        <a href="/login" className="btn btn-outline" style={{ fontSize: 14, padding: '9px 20px' }}>Кіру</a>
+        <a href="/login" className="btn btn-outline" style={{ fontSize: 14, padding: '9px 20px' }}>Войти</a>
       </nav>
 
+      {/* BG */}
       <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', overflow: 'hidden', zIndex: 0 }}>
         <div style={{ position: 'absolute', top: -100, right: -100, width: 500, height: 500,
-          borderRadius: '50%', border: '1px solid var(--border)', opacity: 0.5 }} />
+          borderRadius: '50%', border: '1px solid var(--border)', opacity: .5 }} />
         <div style={{ position: 'absolute', bottom: 0, left: -60, width: 300, height: 300,
-          borderRadius: '50%', background: 'rgba(232,93,4,0.04)' }} />
+          borderRadius: '50%', background: 'rgba(232,93,4,.04)' }} />
       </div>
 
-      <main style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
-        padding: '96px 24px 48px', position: 'relative', zIndex: 1 }}>
-        <div style={{ width: '100%', maxWidth: 540 }}>
+      <main style={{
+        minHeight: '100vh', display: 'flex', alignItems: 'flex-start', justifyContent: 'center',
+        padding: '96px 24px 64px', position: 'relative', zIndex: 1,
+      }}>
+        <div style={{ width: '100%', maxWidth: step === 2 ? 620 : 500 }}>
 
-          <div className="anim-fade-up" style={{ marginBottom: 22 }}>
-            <span className="section-label">Жаңа аккаунт</span>
-            <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(28px,5vw,40px)', marginTop: 7, marginBottom: 5 }}>
-              {step === 1 && <>Өзіңіз туралы <em style={{ fontStyle: 'italic', color: 'var(--accent)' }}></em></>}
-              {step === 2 && <>Дағдыларыңызды <em style={{ fontStyle: 'italic', color: 'var(--accent)' }}>қосыңыз</em></>}
+          {/* Header */}
+          <div className="anim-fade-up" style={{ marginBottom: 20 }}>
+            <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+              {([1,2,3] as Step[]).map(s => (
+                <div key={s} style={{
+                  flex: 1, height: 4, borderRadius: 2,
+                  background: s <= step ? 'var(--accent)' : 'var(--border)',
+                  transition: 'background .4s',
+                }} />
+              ))}
+            </div>
+            <span className="section-label"> {step} |  3 — {stepTitles[step]}</span>
+            <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(26px,5vw,38px)', marginTop: 6, marginBottom: 0 }}>
+              {step === 1 && <>Аккаунт <em style={{ fontStyle: 'italic', color: 'var(--accent)' }}>ашу</em></>}
+              {step === 2 && <>Сіздің <em style={{ fontStyle: 'italic', color: 'var(--accent)' }}>дағдыларыңыз</em></>}
               {step === 3 && <>Соңғы <em style={{ fontStyle: 'italic', color: 'var(--accent)' }}>мәліметтер</em></>}
             </h1>
-            <p style={{ color: 'var(--ink-2)', fontSize: 13 }}>{step} / 3 қадам</p>
           </div>
 
-          <div style={{ height: 3, background: 'var(--border)', borderRadius: 2, marginBottom: 22, overflow: 'hidden' }}>
-            <div style={{ height: '100%', width: `${(step / 3) * 100}%`, background: 'var(--accent)',
-              borderRadius: 2, transition: 'width 0.4s cubic-bezier(0.16,1,0.3,1)' }} />
-          </div>
-
-          <div className="card anim-fade-up d-100" style={{ padding: '30px' }}>
+          {/* Card */}
+          <div className="card anim-fade-up d-100" style={{ padding: 32 }}>
             {error && (
-              <div style={{ padding: '11px 14px', marginBottom: 16,
+              <div style={{
+                padding: '11px 14px', marginBottom: 16, borderRadius: 'var(--r)',
                 background: 'rgba(232,93,4,0.08)', border: '1px solid rgba(232,93,4,0.2)',
-                borderRadius: 'var(--r)', fontSize: 13, color: 'var(--accent)',
-                display: 'flex', alignItems: 'center', gap: 7 }}>
-                ! {error}
+                fontSize: 13, color: 'var(--accent)',
+              }}>
+                ⚠ {error}
               </div>
             )}
 
+            {/* Шаг 1: Основные данные */}
             {step === 1 && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 13 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                 {[
                   { label: 'Есіміңіз', type: 'text', ph: 'Алибек Дуйсенов', key: 'name' },
                   { label: 'Email', type: 'email', ph: 'alibek@gmail.com', key: 'email' },
@@ -236,104 +404,167 @@ export default function RegisterPage() {
                       {f.label}
                     </label>
                     <input className="input" type={f.type} placeholder={f.ph}
-                      value={(form as any)[f.key] || ''}
-                      onChange={e => setForm({ ...form, [f.key]: e.target.value })} />
+                      value={(form as Record<string, string>)[f.key] || ''}
+                      onChange={e => setForm({ ...form, [f.key]: e.target.value })}
+                      onKeyDown={e => e.key === 'Enter' && next()} />
                   </div>
                 ))}
                 <div>
                   <label style={{ fontSize: 13, fontWeight: 500, color: 'var(--ink-2)', display: 'block', marginBottom: 5 }}>
-                    Өзіңіз туралы <span style={{ color: 'var(--ink-3)' }}>(міндетті емес)</span>
+                    Өзіңіз туралы<span style={{ color: 'var(--ink-3)' }}></span>
                   </label>
-                  <textarea className="input" placeholder="КБТУ => ВТиПО, 2 курс студенті..." rows={2}
+                  <textarea className="input" placeholder="КБТУ, 2 курс, мамандығыңыз, хобби..." rows={2}
                     style={{ resize: 'none' }} value={form.bio}
                     onChange={e => setForm({ ...form, bio: e.target.value })} />
                 </div>
                 <button className="btn btn-primary" onClick={next}
-                  style={{ marginTop: 5, padding: '13px', justifyContent: 'center', fontSize: 15 }}>
-                  Келесі
+                  style={{ marginTop: 6, padding: '13px', justifyContent: 'center', fontSize: 15 }}>
+                  Келесі →
                 </button>
               </div>
             )}
 
+            {/* Шаг 2: Навыки */}
             {step === 2 && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-                <SkillInput label="Мен үйрете аламын" sublabel="Қандай пандерде / салада білім / тәжірибеңіз бар?"
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
+                <SkillPicker
+                  label="🟠 Мен үйрете аламын"
+                  sublabel="Сіз не білесіз және басқа студенттерге үйретуге дайынсыз ба?"
                   variant="orange" skills={form.skills_teach}
-                  onChange={s => setForm({ ...form, skills_teach: s })} />
-                <div style={{ borderTop: '1px solid var(--border)', paddingTop: 22 }}>
-                  <SkillInput label="Мен үйренгім келеді" sublabel="Қай бағытта үйренгіңіз келеді?"
+                  onChange={s => setForm({ ...form, skills_teach: s })}
+                />
+                <div style={{ borderTop: '1px solid var(--border)', paddingTop: 26 }}>
+                  <SkillPicker
+                    label="🟢 Мен үйренгім келеді"
+                    sublabel="Сіз серіктесіңізден қандай білім алғыңыз келеді?"
                     variant="green" skills={form.skills_learn}
-                    onChange={s => setForm({ ...form, skills_learn: s })} />
+                    onChange={s => setForm({ ...form, skills_learn: s })}
+                  />
                 </div>
+
+                {/* Превью совпадения */}
+                {form.skills_teach.length > 0 && form.skills_learn.length > 0 && (
+                  <div style={{
+                    padding: '14px 16px', borderRadius: 'var(--r)',
+                    background: 'rgba(232,93,4,0.05)', border: '1px solid rgba(232,93,4,0.15)',
+                    display: 'flex', alignItems: 'center', gap: 12,
+                  }}>
+                    <span style={{ fontSize: 20 }}>✓</span>
+                    <p style={{ fontSize: 13, color: 'var(--ink-2)' }}>
+                      Тамаша! Алгоритм {' '}
+                      <strong style={{ color: 'var(--green)' }}>{form.skills_learn[0]}</strong>{' '}
+                      үйрете алатын және {' '}
+                      <strong style={{ color: 'var(--accent)' }}>{form.skills_teach[0]}</strong>{' '}
+                       үйренгісі келетін студенттерді іздейді
+                    </p>
+                  </div>
+                )}
+
                 <div style={{ display: 'flex', gap: 10 }}>
-                  <button className="btn btn-outline" onClick={() => setStep(1)} style={{ flex: 1, justifyContent: 'center' }}>Артқа</button>
-                  <button className="btn btn-primary" onClick={next} style={{ flex: 2, justifyContent: 'center', padding: '13px' }}>Келесі</button>
+                  <button className="btn btn-outline" onClick={() => setStep(1)} style={{ flex: 1, justifyContent: 'center' }}>← Артқа</button>
+                  <button className="btn btn-primary" onClick={next} style={{ flex: 2, justifyContent: 'center', padding: '13px' }}>Келесі →</button>
                 </div>
               </div>
             )}
 
+            {/* Шаг 3: Telegram + формат */}
             {step === 3 && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
                 <div>
-                  <label style={{ fontSize: 13, fontWeight: 500, color: 'var(--ink-2)', display: 'block', marginBottom: 5 }}>
+                  <label style={{ fontSize: 13, fontWeight: 600, display: 'block', marginBottom: 5 }}>
                     Telegram никнейм <span style={{ color: 'var(--accent)' }}>*</span>
                   </label>
                   <div style={{ position: 'relative' }}>
                     <span style={{ position: 'absolute', left: 13, top: '50%', transform: 'translateY(-50%)',
-                      color: 'var(--ink-3)', fontSize: 14, pointerEvents: 'none' }}>@</span>
-                    <input className="input" placeholder="username" style={{ paddingLeft: 26 }}
+                      color: 'var(--ink-3)', fontSize: 15, pointerEvents: 'none' }}>@</span>
+                    <input className="input" placeholder="username" style={{ paddingLeft: 28 }}
                       value={form.telegram.replace('@', '')}
-                      onChange={e => setForm({ ...form, telegram: e.target.value.replace('@', '') })} />
+                      onChange={e => setForm({ ...form, telegram: e.target.value.replace('@', '') })}
+                      onKeyDown={e => e.key === 'Enter' && submit()} />
                   </div>
-                  <p style={{ fontSize: 13, color: 'var(--ink-3)', marginTop: 3 }}>
-                    Серіктесіңізбен осы арқылы байланысасыз
+                  <p style={{ fontSize: 12, color: 'var(--ink-3)', marginTop: 4 }}>
+                    Матчмейкингтан кейін серіктесіңіз сізге Telegram арқылы хабарлама жазады
                   </p>
                 </div>
 
                 <div>
-                  <label style={{ fontSize: 13, fontWeight: 600, display: 'block', marginBottom: 9 }}>Кездесу форматы</label>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+                  <label style={{ fontSize: 13, fontWeight: 600, display: 'block', marginBottom: 10 }}>
+                    Кездесі форматы
+                  </label>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                     {FORMAT_OPTIONS.map(opt => {
                       const sel = form.format === opt.value
                       return (
-                        <button key={opt.value} type="button" onClick={() => setForm({ ...form, format: opt.value })}
-                          style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '11px 14px',
-                            borderRadius: 'var(--r)', textAlign: 'left', cursor: 'pointer', transition: 'all 0.15s',
+                        <button key={opt.value} type="button"
+                          onClick={() => setForm({ ...form, format: opt.value })}
+                          style={{
+                            display: 'flex', alignItems: 'center', gap: 14, padding: '12px 16px',
+                            borderRadius: 'var(--r)', textAlign: 'left', cursor: 'pointer',
                             border: sel ? '2px solid var(--accent)' : '1.5px solid var(--border)',
-                            background: sel ? 'rgba(232,93,4,0.06)' : 'var(--surface)' }}>
-                          <span style={{ fontSize: 20 }}>{opt.icon}</span>
+                            background: sel ? 'rgba(232,93,4,0.06)' : 'var(--surface)',
+                            transition: 'all .15s',
+                          }}>
+                          <span style={{ fontSize: 22 }}>{opt.icon}</span>
                           <div style={{ flex: 1 }}>
-                            <p style={{ fontWeight: 600, fontSize: 13, color: 'var(--ink)' }}>{opt.label}</p>
+                            <p style={{ fontWeight: 600, fontSize: 14, color: 'var(--ink)' }}>{opt.label}</p>
                             <p style={{ fontSize: 12, color: 'var(--ink-3)' }}>{opt.desc}</p>
                           </div>
-                          {sel && <span style={{ width: 16, height: 16, borderRadius: '50%', background: 'var(--accent)',
+                          <div style={{
+                            width: 18, height: 18, borderRadius: '50%',
+                            border: sel ? 'none' : '2px solid var(--border-2)',
+                            background: sel ? 'var(--accent)' : 'transparent',
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            color: '#fff', fontSize: 9, fontWeight: 700 }}>v</span>}
+                            fontSize: 10, color: '#fff', fontWeight: 700, flexShrink: 0,
+                          }}>
+                            {sel && '✓'}
+                          </div>
                         </button>
                       )
                     })}
                   </div>
                 </div>
 
-                <div style={{ padding: '13px 15px', background: 'var(--surface-2)',
-                  borderRadius: 'var(--r)', border: '1px solid var(--border)' }}>
-                  <p style={{ fontSize: 11, fontWeight: 600, color: 'var(--ink-3)', marginBottom: 7,
-                    textTransform: 'uppercase', letterSpacing: '0.08em' }}>Білім / Тәжірибе</p>
-                  <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
-                    {form.skills_teach.map(s => (
-                      <span key={s} className="badge badge-orange" style={{ fontSize: 11 }}>+ {s}</span>
-                    ))}
-                    {form.skills_learn.map(s => (
-                      <span key={s} className="badge badge-green" style={{ fontSize: 11 }}>{s}?</span>
-                    ))}
+                {/* Итоговый превью */}
+                <div style={{
+                  padding: '16px', background: 'var(--surface-2)',
+                  borderRadius: 'var(--r)', border: '1px solid var(--border)',
+                }}>
+                  <p style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase',
+                    letterSpacing: '0.08em', color: 'var(--ink-3)', marginBottom: 10 }}>
+                    Сіздің профиліңіз
+                  </p>
+                  <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+                    <div>
+                      <p style={{ fontSize: 11, color: 'var(--ink-3)', marginBottom: 5 }}>Үйретемін:</p>
+                      <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+                        {form.skills_teach.map(s => (
+                          <span key={s} style={{ fontSize: 11, padding: '3px 8px', borderRadius: 999,
+                            background: 'rgba(232,93,4,0.1)', color: 'var(--accent)', fontWeight: 500 }}>
+                            {s}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <p style={{ fontSize: 11, color: 'var(--ink-3)', marginBottom: 5 }}>Үйренемін:</p>
+                      <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+                        {form.skills_learn.map(s => (
+                          <span key={s} style={{ fontSize: 11, padding: '3px 8px', borderRadius: 999,
+                            background: 'rgba(26,107,74,0.1)', color: 'var(--green)', fontWeight: 500 }}>
+                            {s}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
                   </div>
                 </div>
 
                 <div style={{ display: 'flex', gap: 10 }}>
-                  <button className="btn btn-outline" onClick={() => setStep(2)} style={{ flex: 1, justifyContent: 'center' }}>Артқа</button>
+                  <button className="btn btn-outline" onClick={() => setStep(2)}
+                    style={{ flex: 1, justifyContent: 'center' }}>← Артқа</button>
                   <button className="btn btn-primary" onClick={submit} disabled={loading}
-                    style={{ flex: 2, justifyContent: 'center', padding: '13px', opacity: loading ? 0.7 : 1 }}>
-                    {loading ? 'Тіркелуде...' : 'Аккаунт ашу'}
+                    style={{ flex: 2, justifyContent: 'center', padding: '13px', opacity: loading ? .7 : 1 }}>
+                    {loading ? 'Аккаунты құрылуда...' : 'Тіркелу 🚀'}
                   </button>
                 </div>
               </div>
