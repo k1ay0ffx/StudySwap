@@ -569,7 +569,7 @@ export default function RegisterPage() {
                     style={{ flex: 1, justifyContent: 'center' }}>← Артқа</button>
                   <button className="btn btn-primary" onClick={submit} disabled={loading}
                     style={{ flex: 2, justifyContent: 'center', padding: '13px', opacity: loading ? .7 : 1 }}>
-                    {loading ? 'Аккаунты құрылуда...' : 'Тіркелу 🚀'}
+                    {loading ? 'Аккаунт құрылуда...' : 'Тіркелу 🚀'}
                   </button>
                 </div>
               </div>

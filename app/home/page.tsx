@@ -500,7 +500,7 @@ export default function HomePage() {
 
   const fmt = profile.format === 'online' ? { icon: '💻', label: 'Онлайн' }
     : profile.format === 'offline' ? { icon: '🤝', label: 'Оффлайн' }
-    : { icon: '⚡', label: 'Иілімді' }
+    : { icon: '⚡', label: 'Кез келген формат' }
 
   return (
     <>
