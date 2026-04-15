@@ -404,7 +404,7 @@ export default function RegisterPage() {
                       {f.label}
                     </label>
                     <input className="input" type={f.type} placeholder={f.ph}
-                      value={(form as Record<string, string>)[f.key] || ''}
+                      value={(form as any)[f.key] || ''}
                       onChange={e => setForm({ ...form, [f.key]: e.target.value })}
                       onKeyDown={e => e.key === 'Enter' && next()} />
                   </div>
