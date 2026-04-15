@@ -330,12 +330,6 @@ export default function RegisterPage() {
 
   const stepTitles = ['', 'Өзіңіз туралы', 'Дағды', 'Мәліметтер']
 
-
-  const getValue = (key: string) => {
-  const val = (form as any)[key]
-      return typeof val === 'string' ? val : ''
-  }
-
   return (
     <>
       {/* Navbar */}
@@ -349,7 +343,7 @@ export default function RegisterPage() {
           color: 'var(--ink)', letterSpacing: '-0.04em', textDecoration: 'none' }}>
           Study<span style={{ color: 'var(--accent)' }}>Swap</span>
         </a>
-        <a href="/login" className="btn btn-outline" style={{ fontSize: 14, padding: '9px 20px' }}>Кіру</a>
+        <a href="/login" className="btn btn-outline" style={{ fontSize: 14, padding: '9px 20px' }}>Войти</a>
       </nav>
 
       {/* BG */}
@@ -409,10 +403,15 @@ export default function RegisterPage() {
                     <label style={{ fontSize: 13, fontWeight: 500, color: 'var(--ink-2)', display: 'block', marginBottom: 5 }}>
                       {f.label}
                     </label>
-                    <input className="input" type={f.type} placeholder={f.ph}
-                      value={getValue(f.key)}
-                      onChange={e => setForm({ ...form, [f.key]: e.target.value } as any)}
-                      onKeyDown={e => e.key === 'Enter' && next()} />
+                    <input 
+                      className="input" 
+                      type={f.type} 
+                      placeholder={f.ph}
+                      // Используем keyof typeof form для безопасного доступа к ключам
+                      value={form[f.key as keyof typeof form] as string || ''}
+                      onChange={e => setForm({ ...form, [f.key]: e.target.value })}
+                      onKeyDown={e => e.key === 'Enter' && next()} 
+                    />
                   </div>
                 ))}
                 <div>
