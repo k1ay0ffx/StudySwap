@@ -330,6 +330,12 @@ export default function RegisterPage() {
 
   const stepTitles = ['', 'Өзіңіз туралы', 'Дағды', 'Мәліметтер']
 
+
+  const getValue = (key: string) => {
+  const val = (form as any)[key]
+      return typeof val === 'string' ? val : ''
+  }
+
   return (
     <>
       {/* Navbar */}
@@ -343,7 +349,7 @@ export default function RegisterPage() {
           color: 'var(--ink)', letterSpacing: '-0.04em', textDecoration: 'none' }}>
           Study<span style={{ color: 'var(--accent)' }}>Swap</span>
         </a>
-        <a href="/login" className="btn btn-outline" style={{ fontSize: 14, padding: '9px 20px' }}>Войти</a>
+        <a href="/login" className="btn btn-outline" style={{ fontSize: 14, padding: '9px 20px' }}>Кіру</a>
       </nav>
 
       {/* BG */}
@@ -404,7 +410,7 @@ export default function RegisterPage() {
                       {f.label}
                     </label>
                     <input className="input" type={f.type} placeholder={f.ph}
-                      value={(form as any)[f.key] || ''}
+                      value={getValue(f.key)}
                       onChange={e => setForm({ ...form, [f.key]: e.target.value } as any)}
                       onKeyDown={e => e.key === 'Enter' && next()} />
                   </div>
