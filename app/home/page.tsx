@@ -857,7 +857,7 @@ export default function HomePage() {
                         color: 'var(--green)', border: '1px solid rgba(26,107,74,0.2)',
                         whiteSpace: 'nowrap' }}>
                         {partner.format === 'online' ? '💻' : partner.format === 'offline' ? '🤝' : '⚡'}{' '}
-                        {partner.format === 'online' ? 'Онлайн' : partner.format === 'offline' ? 'Оффлайн' : 'Гибко'}
+                        {partner.format === 'online' ? 'Онлайн' : partner.format === 'offline' ? 'Оффлайн' : 'Кез келген формат'}
                       </span>
                     </div>
 
